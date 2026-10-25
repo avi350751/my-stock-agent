@@ -1,0 +1,277 @@
+{%- macro bar(pct, color, track="#EAF1EC", h=8) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;background:{{ track }};border-radius:{{ h }}px;">
+  <tr>
+    <td width="{{ pct }}%" style="width:{{ pct }}%;background:{{ color }};height:{{ h }}px;line-height:{{ h }}px;font-size:0;border-radius:{{ h }}px;">&nbsp;</td>
+    <td style="height:{{ h }}px;line-height:{{ h }}px;font-size:0;">&nbsp;</td>
+  </tr>
+</table>
+{%- endmacro -%}
+
+{%- macro pill(text, fg, bg, size=12) -%}
+<span style="display:inline-block;padding:4px 11px;border-radius:999px;background:{{ bg }};color:{{ fg }};font-size:{{ size }}px;font-weight:700;letter-spacing:.4px;white-space:nowrap;">{{ text }}</span>
+{%- endmacro -%}
+
+{%- macro agent_tiles(p) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  {%- for row in p.agents|batch(2) %}
+  <tr>
+    {%- for a in row %}
+    <td width="50%" valign="top" style="padding:{{ '0 6px 12px 0' if loop.first else '0 0 12px 6px' }};">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7FAF8;border:1px solid #E4ECE6;border-radius:10px;">
+        <tr><td style="padding:10px 12px 4px 12px;font-size:12px;color:#5B6F69;">{{ a.label }}</td>
+            <td align="right" style="padding:10px 12px 4px 0;font-size:13px;font-weight:700;color:{{ a.color }};">{{ a.score_str }}</td></tr>
+        <tr><td colspan="2" style="padding:2px 12px 11px 12px;">{{ bar(a.bar_pct, a.color, h=6) }}</td></tr>
+      </table>
+    </td>
+    {%- endfor %}
+  </tr>
+  {%- endfor %}
+</table>
+{%- endmacro -%}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>{{ subject }}</title>
+<style>
+  @media only screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 18px !important; padding-right: 18px !important; }
+    .stack { display: block !important; width: 100% !important; padding: 0 0 10px 0 !important; }
+    .hero-name { font-size: 26px !important; }
+  }
+  a { color: #0F766E; }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F2F6F1;-webkit-font-smoothing:antialiased;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{{ preheader }}</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F2F6F1" style="background:#F2F6F1;">
+<tr><td align="center" style="padding:24px 10px 32px 10px;">
+
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#16302B;">
+
+  {%- if sample %}
+  <tr><td style="padding:0 0 12px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FFF4D6;border:1px dashed #E0A93B;border-radius:10px;">
+      <tr><td style="padding:10px 14px;font-size:12px;color:#7A4E06;text-align:center;">Preview built from synthetic sample data, not real market prices.</td></tr>
+    </table>
+  </td></tr>
+  {%- endif %}
+
+  <!-- Header -->
+  <tr><td bgcolor="#0F766E" style="background:#0F766E;background-image:linear-gradient(135deg,#0F766E 0%,#119A7B 60%,#2FB67C 100%);border-radius:18px 18px 0 0;padding:28px 32px 26px 32px;" class="px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#CFF5E7;font-weight:700;">{{ kicker }}</td>
+        <td align="right" style="font-size:12px;color:#CFF5E7;">{{ market_label }}</td>
+      </tr>
+      <tr><td colspan="2" style="padding-top:10px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:36px;color:#FFFFFF;font-weight:700;">{{ title }}</td></tr>
+      <tr><td colspan="2" style="padding-top:6px;font-size:14px;color:#E3FAF1;">{{ date_long }}</td></tr>
+    </table>
+  </td></tr>
+  <tr><td bgcolor="#F6B93B" style="background:#F6B93B;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
+
+  {%- if mood %}
+  <!-- Market mood -->
+  <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:20px 32px 8px 32px;" class="px">
+    <div style="font-size:16px;font-weight:700;color:#16302B;">{{ mood.title }}</div>
+    <div style="font-size:14px;line-height:21px;color:#5B6F69;padding-top:4px;">{{ mood.line }}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;">
+      <tr>
+        {%- for stat in mood.stats %}
+        <td class="stack" width="33%" valign="top" style="padding:{{ '0 6px 0 0' if loop.first else '0 0 0 6px' if loop.last else '0 6px' }};">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7FAF8;border:1px solid #E4ECE6;border-radius:10px;">
+            <tr><td style="padding:10px 12px 2px 12px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#7A8C86;">{{ stat.label }}</td></tr>
+            <tr><td style="padding:0 12px 10px 12px;font-size:17px;font-weight:700;color:{{ stat.color }};">{{ stat.value }}</td></tr>
+          </table>
+        </td>
+        {%- endfor %}
+      </tr>
+    </table>
+  </td></tr>
+  {%- endif %}
+
+  {%- set p = hero %}
+  <!-- Hero pick -->
+  <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:18px 32px 6px 32px;" class="px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #DCEBE2;border-radius:16px;">
+      <tr><td style="padding:22px 22px 6px 22px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="top">
+              <div style="font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:#B7791F;font-weight:700;">{{ hero_label }}</div>
+              <div class="hero-name" style="padding-top:6px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:34px;font-weight:700;color:#16302B;">{{ p.name }}</div>
+              <div style="padding-top:5px;font-size:13px;color:#5B6F69;">{{ p.symbol }}{% if p.industry %} &middot; {{ p.industry }}{% endif %}</div>
+            </td>
+            <td valign="top" align="right" style="white-space:nowrap;">
+              <div style="font-size:22px;font-weight:700;color:#16302B;">{{ p.close_str }}</div>
+              <div style="padding-top:4px;">{{ pill(p.change_str, p.change_fg, p.change_bg) }}</div>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:12px 22px 4px 22px;">
+        {{ pill(p.verdict, p.verdict_fg, p.verdict_bg, 13) }}
+      </td></tr>
+
+      <tr><td style="padding:14px 22px 2px 22px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="font-size:12px;color:#5B6F69;padding-bottom:6px;">Signal strength</td>
+              <td align="right" style="font-size:12px;color:#5B6F69;padding-bottom:6px;"><b style="color:#16302B;">{{ p.composite_str }}</b> &nbsp;&middot;&nbsp; confidence {{ p.confidence_pct }}%</td></tr>
+          <tr><td colspan="2">{{ bar(p.strength_pct, p.verdict_fg, h=10) }}</td></tr>
+        </table>
+      </td></tr>
+
+      {%- if p.chart_src %}
+      <tr><td style="padding:16px 16px 0 16px;">
+        <img src="{{ p.chart_src }}" width="540" alt="{{ p.symbol }} price, last 3 months, with 50-day average" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:8px;">
+        <div style="padding:6px 6px 0 6px;font-size:11px;color:#7A8C86;"><span style="color:#0F766E;font-weight:700;">&#9473;</span> Close &nbsp;&nbsp;<span style="color:#D97706;font-weight:700;">&#9476;</span> 50-day average &nbsp;&middot;&nbsp; last 3 months</div>
+      </td></tr>
+      {%- endif %}
+
+      <tr><td style="padding:16px 22px 4px 22px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F0FAF5;border-left:4px solid #2FB67C;">
+          <tr><td style="padding:12px 14px;font-size:14px;line-height:22px;color:#1F3B35;">{{ p.note }}</td></tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:12px 22px 4px 22px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F4F9FF;border:1px solid #CFE2F5;border-radius:10px;">
+          <tr><td colspan="2" style="padding:12px 14px 7px;font-size:14px;font-weight:700;color:#174A70;">Investor call</td></tr>
+          <tr><td style="padding:3px 14px;font-size:12px;color:#5B6F69;">Posture</td><td align="right" style="padding:3px 14px;font-size:13px;font-weight:700;color:#16302B;">{{ p.investor.posture }}</td></tr>
+          {%- if p.investor.buy_zone %}
+          <tr><td style="padding:3px 14px;font-size:12px;color:#5B6F69;">Indicative buy zone</td><td align="right" style="padding:3px 14px;font-size:13px;font-weight:700;color:#16302B;">{{ p.investor.buy_zone }}</td></tr>
+          {%- endif %}
+          {%- if p.investor.trigger %}
+          <tr><td style="padding:3px 14px;font-size:12px;color:#5B6F69;">Entry trigger</td><td align="right" style="padding:3px 14px;font-size:13px;font-weight:700;color:#16302B;">{{ p.investor.trigger }}</td></tr>
+          {%- endif %}
+          {%- if p.investor.invalidation %}
+          <tr><td style="padding:3px 14px;font-size:12px;color:#5B6F69;">Thesis invalid below</td><td align="right" style="padding:3px 14px;font-size:13px;font-weight:700;color:#16302B;">{{ p.investor.invalidation }}</td></tr>
+          {%- endif %}
+          <tr><td colspan="2" style="padding:8px 14px 3px;font-size:13px;line-height:20px;color:#24485F;">{{ p.investor.guidance }}</td></tr>
+          <tr><td colspan="2" style="padding:2px 14px 12px;font-size:11px;line-height:17px;color:#7A8C86;">{{ p.investor.basis }} Indicative levels as of {{ p.investor.as_of }}.</td></tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:16px 22px 0 22px;">
+        <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7A8C86;font-weight:700;padding-bottom:10px;">What the four analysts found</div>
+        {{ agent_tiles(p) }}
+      </td></tr>
+
+      <tr><td style="padding:4px 22px 0 22px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td class="stack" width="50%" valign="top" style="padding-right:10px;">
+              <div style="font-size:13px;font-weight:700;color:#15803D;padding-bottom:6px;">Strongest evidence</div>
+              {%- for w in p.why %}
+              <div style="font-size:13px;line-height:20px;color:#2E4A43;padding:0 0 6px 0;"><span style="color:#2FB67C;">&#9679;</span>&nbsp; {{ w }}</div>
+              {%- endfor %}
+            </td>
+            <td class="stack" width="50%" valign="top" style="padding-left:10px;">
+              <div style="font-size:13px;font-weight:700;color:#B7791F;padding-bottom:6px;">What would change the call</div>
+              {%- for f in p.flips %}
+              <div style="font-size:13px;line-height:20px;color:#2E4A43;padding:0 0 6px 0;"><span style="color:#F6B93B;">&#9679;</span>&nbsp; {{ f }}</div>
+              {%- endfor %}
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+
+      {%- if p.flags %}
+      <tr><td style="padding:8px 22px 0 22px;">
+        {%- for f in p.flags %}
+        <div style="font-size:12px;line-height:18px;color:#8A5A0B;background:#FFF7E6;border-radius:8px;padding:7px 10px;margin-bottom:6px;">{{ f }}</div>
+        {%- endfor %}
+      </td></tr>
+      {%- endif %}
+
+      {%- if p.sources %}
+      <tr><td style="padding:10px 22px 20px 22px;">
+        <div style="font-size:12px;color:#7A8C86;padding-bottom:4px;">In the news</div>
+        {%- for s in p.sources %}
+        <div style="font-size:12px;line-height:18px;padding-bottom:4px;"><a href="{{ s.url }}" style="color:#0F766E;text-decoration:none;">{{ s.title }}</a>{% if s.source %} <span style="color:#9AAAA4;">&middot; {{ s.source }}</span>{% endif %}</div>
+        {%- endfor %}
+      </td></tr>
+      {%- else %}
+      <tr><td style="padding:0 0 14px 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+      {%- endif %}
+    </table>
+  </td></tr>
+
+  {%- if others %}
+  <!-- Runners-up -->
+  <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:18px 32px 4px 32px;" class="px">
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#16302B;">Also on the radar</div>
+    <div style="font-size:13px;color:#5B6F69;padding:3px 0 12px 0;">More strong setups from the last session, ranked by the same four analysts.</div>
+  </td></tr>
+  {%- for p in others %}
+  <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:0 32px 14px 32px;" class="px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E4ECE6;border-radius:14px;">
+      <tr><td style="padding:16px 18px 0 18px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="top">
+              <div style="font-size:17px;font-weight:700;color:#16302B;">{{ loop.index + 1 }}. {{ p.name }}</div>
+              <div style="font-size:12px;color:#5B6F69;padding-top:3px;">{{ p.symbol }}{% if p.industry %} &middot; {{ p.industry }}{% endif %} &middot; {{ p.close_str }} <span style="color:{{ p.change_fg }};font-weight:700;">{{ p.change_str }}</span></div>
+            </td>
+            <td valign="top" align="right">{{ pill(p.verdict, p.verdict_fg, p.verdict_bg) }}</td>
+          </tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:10px 18px 0 18px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td width="70%">{{ bar(p.strength_pct, p.verdict_fg, h=6) }}</td>
+              <td align="right" style="font-size:12px;color:#5B6F69;">{{ p.composite_str }} &middot; conf {{ p.confidence_pct }}%</td></tr>
+        </table>
+      </td></tr>
+      {%- if p.chart_src %}
+      <tr><td style="padding:12px 12px 0 12px;">
+        <img src="{{ p.chart_src }}" width="520" alt="{{ p.symbol }} price, last 3 months" style="display:block;width:100%;max-width:520px;height:auto;border:0;border-radius:6px;">
+      </td></tr>
+      {%- endif %}
+      <tr><td style="padding:10px 18px 0 18px;font-size:13px;line-height:20px;color:#2E4A43;">{{ p.note_short }}</td></tr>
+      <tr><td style="padding:8px 18px 0 18px;font-size:12px;line-height:19px;color:#5B6F69;">
+        {%- for a in p.agents %}<span style="white-space:nowrap;">{{ a.label }} <b style="color:{{ a.color }};">{{ a.score_str }}</b></span>{% if not loop.last %} &nbsp;&middot;&nbsp; {% endif %}{%- endfor %}
+      </td></tr>
+      <tr><td style="padding:8px 18px 16px 18px;font-size:12px;line-height:18px;color:#7A8C86;">
+        <span style="color:#2E4A43;">If you hold: <b>{{ p.if_hold }}</b> &nbsp;&middot;&nbsp; If you don't: <b>{{ p.if_dont }}</b></span><br>
+        Watch: {{ p.flips[0] if p.flips else '-' }}
+      </td></tr>
+    </table>
+  </td></tr>
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if notes %}
+  <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:0 32px 14px 32px;" class="px">
+    {%- for n in notes %}
+    <div style="font-size:13px;line-height:20px;color:#5B6F69;background:#F7FAF8;border-radius:10px;padding:10px 12px;">{{ n }}</div>
+    {%- endfor %}
+  </td></tr>
+  {%- endif %}
+
+  <!-- Method -->
+  <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border-radius:0 0 18px 18px;padding:8px 32px 26px 32px;" class="px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #E4ECE6;">
+      <tr><td style="padding-top:16px;font-size:12px;line-height:19px;color:#7A8C86;">
+        <b style="color:#5B6F69;">How this was put together.</b> {{ method }}
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td align="center" style="padding:18px 24px 0 24px;font-size:11px;line-height:17px;color:#8FA19A;">
+    Generated by stockdesk, an open-source research tool. This is analysis to support your own decisions,
+    not investment advice. Markets carry risk; please size positions sensibly.
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

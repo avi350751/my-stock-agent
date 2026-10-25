@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>stockdesk · stock check</title>
+<style>
+  :root {
+    --bg: #F2F6F1; --card: #FFFFFF; --ink: #16302B; --muted: #5B6F69; --faint: #8FA19A;
+    --line: #E4ECE6; --soft: #F7FAF8; --teal: #0F766E; --teal2: #119A7B; --mint: #2FB67C;
+    --green: #15803D; --green-bg: #DCFCE7; --amber: #B7791F; --amber-bg: #FEF3C7;
+    --red: #B91C1C; --red-bg: #FEE2E2; --gold: #F6B93B;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { background: linear-gradient(135deg, var(--teal) 0%, var(--teal2) 60%, var(--mint) 100%);
+           color: #fff; border-radius: 18px 18px 0 0; padding: 22px 24px 20px; }
+  header .kick { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #CFF5E7; font-weight: 700; }
+  header h1 { margin: 6px 0 2px; font: 700 26px/1.2 Georgia, "Times New Roman", serif; }
+  header p { margin: 0; color: #E3FAF1; font-size: 14px; }
+  .bar { height: 4px; background: var(--gold); }
+  .panel { background: var(--card); border-radius: 0 0 18px 18px; padding: 20px 24px 22px; }
+  form { display: flex; gap: 8px; }
+  input[type=text] { flex: 1; min-width: 0; font: inherit; font-size: 17px; padding: 12px 14px; border: 1.5px solid #CFE1D7;
+                     border-radius: 12px; outline: none; color: var(--ink); background: #fff; }
+  input[type=text]:focus { border-color: var(--teal); box-shadow: 0 0 0 3px #CCEFE9; }
+  button.go { font: inherit; font-weight: 700; padding: 0 20px; border: 0; border-radius: 12px; cursor: pointer;
+              background: var(--teal); color: #fff; }
+  button.go:disabled { opacity: .55; cursor: default; }
+  .opts { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--soft); }
+  .seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--muted); padding: 5px 12px;
+                border-radius: 999px; cursor: pointer; }
+  .seg button.on { background: #fff; color: var(--ink); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { font: inherit; font-size: 12px; border: 1px solid #DCE7E0; background: #fff; color: #2E4A43;
+                  border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+  .chips button:hover { border-color: var(--teal); color: var(--teal); }
+  .section { margin-top: 18px; }
+  .agents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .agent { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
+  .agent .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); }
+  .agent .score { font-weight: 700; font-size: 14px; }
+  .agent .track { height: 6px; border-radius: 6px; background: #EAF1EC; margin-top: 8px; overflow: hidden; }
+  .agent .fill { height: 100%; width: 0; border-radius: 6px; transition: width .5s ease; }
+  .agent .sub { font-size: 12px; color: var(--faint); margin-top: 6px; min-height: 18px; }
+  .spin { width: 14px; height: 14px; border: 2px solid #CFE1D7; border-top-color: var(--teal); border-radius: 50%;
+          animation: spin .8s linear infinite; display: inline-block; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .status b { color: var(--ink); }
+  .card { border: 1px solid #DCEBE2; border-radius: 16px; padding: 18px 20px; background: #fff; }
+  .head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .name { font: 700 24px/1.2 Georgia, "Times New Roman", serif; }
+  .meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .price { text-align: right; white-space: nowrap; }
+  .price .px { font-size: 20px; font-weight: 700; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .calls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+  .calls.one { grid-template-columns: 1fr; }
+  .call { border-radius: 14px; padding: 14px 16px; }
+  .call .lbl { font-size: 12px; letter-spacing: .5px; text-transform: uppercase; font-weight: 700; opacity: .8; }
+  .call .word { font-size: 30px; font-weight: 800; letter-spacing: 1px; margin-top: 2px; }
+  .reason { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .meter { height: 10px; border-radius: 10px; background: #EAF1EC; margin-top: 8px; overflow: hidden; }
+  .meter div { height: 100%; border-radius: 10px; }
+  .note { margin-top: 16px; background: #F0FAF5; border-left: 4px solid var(--mint); padding: 12px 14px; font-size: 14px; color: #1F3B35; }
+  .investor { margin-top: 16px; background: #F4F9FF; border: 1px solid #CFE2F5; border-radius: 12px; padding: 14px 16px; }
+  .investor h3 { margin: 0 0 10px; font-size: 15px; color: #174A70; }
+  .investor .row { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; font-size: 13px; }
+  .investor .row span:first-child { color: var(--muted); }
+  .investor .guide { margin-top: 8px; font-size: 13px; color: #24485F; }
+  .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  .cols h4 { margin: 0 0 6px; font-size: 13px; }
+  .cols ul { margin: 0; padding-left: 18px; font-size: 13px; color: #2E4A43; }
+  .cols li { margin-bottom: 4px; }
+  .flag { font-size: 12px; color: #8A5A0B; background: #FFF7E6; border-radius: 8px; padding: 7px 10px; margin-top: 8px; }
+  img.chart { display: block; width: 100%; height: auto; margin-top: 14px; border-radius: 8px; }
+  .legend { font-size: 11px; color: var(--faint); margin-top: 4px; }
+  details { margin-top: 14px; font-size: 13px; }
+  summary { cursor: pointer; color: var(--teal); font-weight: 600; }
+  .det { margin-top: 8px; }
+  .det .a { padding: 8px 0; border-top: 1px solid var(--line); }
+  .det .a b { text-transform: capitalize; }
+  .src a { color: var(--teal); text-decoration: none; }
+  .src div { margin-bottom: 4px; font-size: 13px; }
+  .err { color: var(--red); background: var(--red-bg); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  .choices button { margin: 6px 6px 0 0; }
+  .demo { background: #FFF4D6; border: 1px dashed #E0A93B; color: #7A4E06; border-radius: 10px; padding: 8px 12px;
+          font-size: 12px; text-align: center; margin-bottom: 12px; }
+  footer { text-align: center; font-size: 11px; color: var(--faint); margin-top: 16px; }
+  .hidden { display: none !important; }
+  @media (max-width: 520px) {
+    .wrap { padding: 12px 10px 40px; }
+    header, .panel { padding-left: 16px; padding-right: 16px; }
+    .cols { grid-template-columns: 1fr; }
+    .call .word { font-size: 24px; }
+    .name { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="demoBanner" class="demo hidden">Demo mode: fictional companies and synthetic prices, not real market data.</div>
+  <header>
+    <div class="kick">stockdesk · single-stock check</div>
+    <h1>Should I buy, hold or sell?</h1>
+    <p>Enter a stock name or NSE ticker. Four specialist agents analyse it in parallel.</p>
+  </header>
+  <div class="bar"></div>
+  <div class="panel">
+    <form id="f" autocomplete="off">
+      <input id="q" type="text" list="uni" placeholder="e.g. Infosys, RELIANCE, hdfc bank" aria-label="Stock name or ticker" autofocus>
+      <datalist id="uni"></datalist>
+      <button class="go" id="go" type="submit">Check</button>
+    </form>
+    <div class="opts">
+      <span>Horizon
+        <span class="seg" id="hz">
+          <button type="button" data-v="swing">Weeks</button>
+          <button type="button" data-v="positional" class="on">Months</button>
+          <button type="button" data-v="long">Years</button>
+        </span>
+      </span>
+    </div>
+    <div class="chips" id="chips"></div>
+
+    <div class="section hidden" id="progress">
+      <div class="status" id="status"></div>
+      <div class="agents" id="agents"></div>
+    </div>
+
+    <div class="section hidden" id="msg"></div>
+    <div class="section hidden" id="result"></div>
+  </div>
+  <footer>Open-source research tool, not investment advice. Runs on your machine.</footer>
+</div>
+
+<script>
+const AGENTS = [["market", "Global & technical"], ["sentiment", "Investor sentiment"], ["news", "Company news"], ["fundamentals", "Fundamentals"]];
+const COLORS = { BUY: ["#15803D", "#DCFCE7"], HOLD: ["#B7791F", "#FEF3C7"],
+                 SELL: ["#B91C1C", "#FEE2E2"] };
+const $ = (id) => document.getElementById(id);
+let horizon = "positional", es = null, demo = false;
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function scoreColor(x) { return x >= 0.15 ? "#15803D" : x <= -0.15 ? "#C2410C" : "#B7791F"; }
+
+function segment(id, cb) {
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...$(id).children].forEach(x => x.classList.toggle("on", x === b));
+    cb(b.dataset.v);
+  });
+}
+segment("hz", v => { horizon = v; });
+
+fetch("/api/health").then(r => r.json()).then(h => {
+  demo = h.demo; $("demoBanner").classList.toggle("hidden", !demo);
+  const ex = demo ? ["Kestrel Motors", "MONSOON", "Waveline", "Zenith Bank"] : ["Infosys", "RELIANCE", "HDFC Bank", "Tata Steel"];
+  $("chips").innerHTML = "Try: " + ex.map(x => `<button type="button">${esc(x)}</button>`).join("");
+  $("q").placeholder = "e.g. " + ex.slice(0, 3).join(", ");
+}).catch(() => {});
+$("chips").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { $("q").value = b.textContent; start(); } });
+fetch("/api/universe").then(r => r.json()).then(list => {
+  $("uni").innerHTML = list.map(u => `<option value="${esc(u.symbol)}">${esc(u.name)}</option>`).join("");
+}).catch(() => {});
+
+function resetAgents() {
+  $("agents").innerHTML = AGENTS.map(([k, label]) => `
+    <div class="agent" id="ag-${k}">
+      <div class="top"><span>${label} analyst</span><span class="score"><span class="spin"></span></span></div>
+      <div class="track"><div class="fill"></div></div>
+      <div class="sub">working…</div>
+    </div>`).join("");
+}
+
+function setAgent(k, score, conf) {
+  const el = $("ag-" + k); if (!el) return;
+  const c = scoreColor(score);
+  el.querySelector(".score").innerHTML = `<span style="color:${c}">${score >= 0 ? "+" : ""}${score.toFixed(2)}</span>`;
+  const fill = el.querySelector(".fill"); fill.style.background = c; fill.style.width = Math.max(4, (score + 1) / 2 * 100) + "%";
+  el.querySelector(".sub").textContent = `done · confidence ${conf}`;
+}
+
+function show(id, html) { $(id).innerHTML = html; $(id).classList.toggle("hidden", !html); }
+
+$("f").addEventListener("submit", e => { e.preventDefault(); start(); });
+
+function start(q) {
+  q = (q ?? $("q").value).trim();
+  if (!q) { show("msg", `<div class="err">Type a stock name or ticker first.</div>`); $("q").focus(); return; }
+  if (es) es.close();
+  window.__last = null;
+  show("msg", ""); show("result", "");
+  resetAgents();
+  $("progress").classList.remove("hidden");
+  $("status").innerHTML = `Looking up <b>${esc(q)}</b>…`;
+  $("go").disabled = true;
+  es = new EventSource(`/api/check?q=${encodeURIComponent(q)}&horizon=${horizon}`);
+  es.addEventListener("progress", ev => {
+    const d = JSON.parse(ev.data);
+    if (d.stage === "resolve") $("status").innerHTML = `Found <b>${esc(d.message)}</b> · gathering data…`;
+    else if (d.stage === "gather") $("status").innerHTML = $("status").innerHTML.replace(" · gathering data…", "") +
+      `<br>${esc(d.message)} · analysts running in parallel…`;
+    else if (d.stage === "chief") $("status").innerHTML += "<br>Chief analyst combining the reports…";
+    else {
+      const m = d.message.match(/([+-]?\d+\.\d+) \(confidence (\d+%)\)/);
+      if (m) setAgent(d.stage, parseFloat(m[1]), m[2]);
+    }
+  });
+  es.addEventListener("choices", ev => {
+    const d = JSON.parse(ev.data); done();
+    $("progress").classList.add("hidden");
+    show("msg", `<div>'${esc(d.query)}' matches several stocks. Which one?</div><div class="chips choices">` +
+      d.candidates.map(c => `<button type="button" data-s="${esc(c.symbol)}">${esc(c.name)} (${esc(c.symbol)})</button>`).join("") + "</div>");
+    $("msg").querySelectorAll("button").forEach(b => b.onclick = () => { $("q").value = b.dataset.s; start(b.dataset.s); });
+  });
+  es.addEventListener("failed", ev => {
+    const d = JSON.parse(ev.data); done();
+    $("progress").classList.add("hidden");
+    show("msg", `<div class="err">${esc(d.message)}</div>`);
+  });
+  es.addEventListener("result", ev => {
+    const d = JSON.parse(ev.data); done();
+    $("status").innerHTML = `Done · ${esc(d.name)} (${esc(d.symbol)})`;
+    d.agents.forEach(a => setAgent(a.key, a.score, a.confidence + "%"));
+    window.__last = d; renderResult(d);
+  });
+  es.onerror = () => { if (es && es.readyState !== EventSource.CLOSED) { done();
+    if (!window.__last && $("msg").classList.contains("hidden"))
+      show("msg", `<div class="err">Lost the connection to stockdesk. Is <code>stockdesk serve</code> still running?</div>`); } };
+}
+function done() { if (es) { es.close(); es = null; } $("go").disabled = false; }
+
+function callBox(label, word) {
+  const [fg, bg] = COLORS[word] || ["#16302B", "#F7FAF8"];
+  return `<div class="call" style="background:${bg};color:${fg}"><div class="lbl">${label}</div><div class="word">${word}</div></div>`;
+}
+
+function renderResult(d) {
+  const up = d.change_pct >= 0;
+  const calls = `<div class="calls one">${callBox("Chief analyst decision", d.verdict)}</div>`;
+  const mc = scoreColor(d.composite);
+  const list = (xs) => xs.length ? `<ul>${xs.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<div class="meta">Nothing notable.</div>`;
+  show("result", `
+    <div class="card">
+      <div class="head">
+        <div><div class="name">${esc(d.name)}</div>
+             <div class="meta">${esc(d.symbol)}${d.industry ? " · " + esc(d.industry) : ""} · ${esc(d.market)} close ${esc(d.as_of)}</div></div>
+        <div class="price"><div class="px">${esc(d.close)}</div>
+             <span class="pill" style="color:${up ? "#15803D" : "#B91C1C"};background:${up ? "#DCFCE7" : "#FEE2E2"}">${up ? "▲" : "▼"} ${Math.abs(d.change_pct).toFixed(2)}%</span></div>
+      </div>
+      ${calls}
+      <div class="meta" style="margin-top:12px;display:flex;justify-content:space-between"><span>Signal strength</span>
+        <span><b style="color:var(--ink)">${d.composite >= 0 ? "+" : ""}${d.composite.toFixed(2)}</b> · confidence ${d.confidence}%</span></div>
+      <div class="meter"><div style="width:${Math.max(4, (d.composite + 1) / 2 * 100)}%;background:${mc}"></div></div>
+      <div class="note">${esc(d.note)}</div>
+      <div class="investor">
+        <h3>Investor call</h3>
+        <div class="row"><span>Posture</span><b>${esc(d.investor_call.posture)}</b></div>
+        ${d.investor_call.buy_zone ? `<div class="row"><span>Indicative buy zone</span><b>${esc(d.investor_call.buy_zone)}</b></div>` : ""}
+        ${d.investor_call.trigger ? `<div class="row"><span>Entry trigger</span><b>${esc(d.investor_call.trigger)}</b></div>` : ""}
+        ${d.investor_call.invalidation ? `<div class="row"><span>Thesis invalid below</span><b>${esc(d.investor_call.invalidation)}</b></div>` : ""}
+        <div class="guide">${esc(d.investor_call.guidance)}</div>
+        <div class="meta" style="margin-top:6px">${esc(d.investor_call.basis)} Indicative levels as of ${esc(d.as_of)}.</div>
+      </div>
+      ${d.chart ? `<img class="chart" src="${d.chart}" alt="Price, last 3 months, with 50-day average">
+                   <div class="legend"><b style="color:#0F766E">━</b> Close &nbsp; <b style="color:#D97706">┄</b> 50-day average · last 3 months</div>` : ""}
+      <div class="cols">
+        <div><h4 style="color:#15803D">Working for it</h4>${list(d.pros)}</div>
+        <div><h4 style="color:#C2410C">Working against it</h4>${list(d.cons)}</div>
+      </div>
+      <div class="cols"><div style="grid-column:1/-1"><h4 style="color:#B7791F">What would change the call</h4>${list(d.flips)}</div></div>
+      ${d.flags.map(f => `<div class="flag">${esc(f)}</div>`).join("")}
+      <details><summary>Each analyst's report</summary><div class="det">
+        ${d.agents.map(a => `<div class="a"><b>${esc(a.key)}</b> <span style="color:${scoreColor(a.score)};font-weight:700">${a.score >= 0 ? "+" : ""}${a.score.toFixed(2)}</span>
+          <span class="meta">· confidence ${a.confidence}%</span><div>${esc(a.rationale)}</div>
+          <div class="meta">${a.signals.map(esc).join(" · ")}</div></div>`).join("")}
+      </div></details>
+      ${d.sources.length ? `<details open><summary>In the news</summary><div class="det src">
+        ${d.sources.map(s => `<div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a> <span class="meta">${esc(s.source)}</span></div>`).join("")}
+      </div></details>` : ""}
+    </div>`);
+}
+</script>
+</body>
+</html>
